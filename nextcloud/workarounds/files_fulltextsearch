@@ -1,0 +1,54 @@
+/**
+* Customizing of the file custom_apps/files_fulltextsearch/lib/Service/FilesService.php
+* to add Support for eml files
+* Tested with NC21 and addon version XX
+*/
+
+private function parseMimeTypeText(string $mimeType, string $extension, string &$parsed) {
+
+		if (substr($mimeType, 0, 5) === 'text/') {
+			$parsed = self::MIMETYPE_TEXT;
+			throw new KnownFileMimeTypeException();
+		}
+
+		$textMimes = [
+			'application/epub+zip',
+			'message/rfc822'
+		];
+
+		foreach ($textMimes as $mime) {
+			if (strpos($mimeType, $mime) === 0) {
+				$parsed = self::MIMETYPE_TEXT;
+				throw new KnownFileMimeTypeException();
+			}
+		}
+
+		$this->parseMimeTypeTextByExtension($mimeType, $extension, $parsed);
+	}
+	/**
+	 * @param string $mimeType
+	 * @param string $extension
+	 * @param string $parsed
+	 *
+	 * @throws KnownFileMimeTypeException
+	 */
+	private function parseMimeTypeTextByExtension(
+		string $mimeType, string $extension, string &$parsed
+	) {
+		$textMimes = [
+			'application/octet-stream'
+		];
+		$textExtension = [
+			'eml'
+		];
+
+		foreach ($textMimes as $mime) {
+			if (strpos($mimeType, $mime) === 0
+				&& in_array(
+					strtolower($extension), $textExtension
+				)) {
+				$parsed = self::MIMETYPE_TEXT;
+				throw new KnownFileMimeTypeException();
+			}
+		}
+	}
