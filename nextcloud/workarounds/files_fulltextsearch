@@ -1,7 +1,7 @@
 /**
 * Customizing of the file custom_apps/files_fulltextsearch/lib/Service/FilesService.php
 * to add Support for eml files
-* Tested with NC21 and addon version XX
+* Tested with NC21 and addon version 20.0.0
 */
 
 private function parseMimeTypeText(string $mimeType, string $extension, string &$parsed) {
