@@ -2,19 +2,16 @@ version: '3'
 services:
   traefik:
     image: traefik:2.4
-    command: --api.insecure=true --providers.docker --entryPoints.web.address=:80 --entryPoints.web-secure.address=:443
+    command: --api.insecure=true --providers.docker 
+    depends_on:
+      - nextcloud
     ports:
       - "80:80"
-      - "433:433"
       - "8080:8080"
     restart: always
     volumes:
-      # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      #- /storage/nextcloud_compose/traefik/traefik.toml:/traefik.toml
-      #- /storage/nextcloud_compose/traefik/acme.json:/acme.json 
   mariadb:
-    #env_file: .mariadb.env
     image: mariadb:10
     ports:
       - 3306:3306
@@ -23,13 +20,15 @@ services:
       - /storage/nextcloud_compose/mariadb:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-
   redis:
     image: redis:6
     restart: always
     volumes:
       - /storage/nextcloud_compose/redis:/data
-      
+  elasticsearch:
+    image: schumischumi/elasticsearch-ingest-attachment:6.8.1-1
+    ports:
+      - "9200:9200"
   nextcloud:
     depends_on:
       - mariadb
@@ -38,19 +37,7 @@ services:
       - elasticsearch
     image: nextcloud:21
     labels:
-      #- "traefik.enable=true"
-      #- "traefik.http.middlewares.nextcloud-caldav.redirectregex.permanent=true"
-      #- "traefik.http.middlewares.nextcloud-caldav.redirectregex.regex=^https://(.*)/.well-known/(card|cal)dav"
-      #- "traefik.http.middlewares.nextcloud-caldav.redirectregex.replacement=https://$${1}/remote.php/dav/"
-      #- "traefik.http.middlewares.nextcloud-https.redirectscheme.scheme=https"
-      #- "traefik.http.routers.nextcloud-http.entrypoints=web"
       - "traefik.http.routers.nextcloud-http.rule=Host(`next.dockerhost.local`)"
-      #- "traefik.http.routers.nextcloud-http.middlewares=nextcloud-https@docker"
-      #- "traefik.http.routers.nextcloud.entrypoints=web-secure"
-      #- "traefik.http.routers.nextcloud.rule=Host(`next.dockerhost.local`)"
-      #- "traefik.http.routers.nextcloud.middlewares=nextcloud-caldav@docker"
-      #- "traefik.http.routers.nextcloud.tls=true"
-      #- "traefik.http.routers.nextcloud.tls.certresolver=default"
     restart: always
     volumes:
       - /storage/nextcloud_compose/nextcloud/html:/var/www/html
