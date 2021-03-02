@@ -27,8 +27,13 @@ services:
       - /storage/nextcloud_compose/redis:/data
   elasticsearch:
     image: schumischumi/elasticsearch-ingest-attachment:6.8.1-1
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - discovery.type=single-node
     ports:
       - "9200:9200"
+    volumes:
+      - /storage/nextcloud_compose/elasticsearch/data:/usr/share/elasticsearch/data
   nextcloud:
     depends_on:
       - mariadb
@@ -37,7 +42,7 @@ services:
       - elasticsearch
     image: nextcloud:21
     labels:
-      - "traefik.http.routers.nextcloud-http.rule=Host(`next.dockerhost.local`)"
+      - "traefik.http.routers.nextcloud-http.rule=Host(`nextcloud.dockerbox.local`)"
     restart: always
     volumes:
       - /storage/nextcloud_compose/nextcloud/html:/var/www/html
