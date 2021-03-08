@@ -1,5 +1,5 @@
 
-version: '3.2'
+version: '3.3'
 
 services:
   agent:
@@ -24,6 +24,11 @@ services:
       - portainer_data:/data
     networks:
       - agent_network
+      - bridge
+    labels:
+      - "traefik.http.routers.portainer.rule=Host(`portainer.dockerbox.local`)"
+      - "traefik.docker.network=bridge"
+      - "traefik.http.services.portainer.loadbalancer.server.port=9000"
     deploy:
       mode: replicated
       replicas: 1
@@ -34,6 +39,7 @@ networks:
   agent_network:
     driver: overlay
     attachable: true
-
+  bridge:
+    external: true
 volumes:
   portainer_data:
