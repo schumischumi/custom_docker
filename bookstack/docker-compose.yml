@@ -1,0 +1,44 @@
+version: "3"
+networks:
+  bridge:
+    external: true
+  default_bookstack:
+    internal: true
+services:
+  bookstack:
+    image: solidnerd/bookstack
+    container_name: bookstack
+    hostname: "bookstack.dockerbox.local"
+    environment:
+      - DB_HOST=bookstack_db:3306
+      - DB_USERNAME=bookstack
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_DATABASE=bookstack
+    volumes:
+      - /storage/bookstack/bookstack_data/public/uploads:/var/www/bookstack/public/uploads
+      - /storage/bookstack/bookstack_data/storage/uploads:/var/www/bookstack/storage/uploads
+      - /storage/bookstack/bookstack_data/.env:/var/www/bookstack/.env
+    restart: unless-stopped
+    depends_on:
+      - bookstack_db
+    labels:
+      - "traefik.http.routers.bookstack-http.rule=Host(`bookstack.dockerbox.local`)"
+      - "traefik.docker.network=bridge"
+      - "traefik.http.services.bookstack-http.loadbalancer.server.port=8080"
+    networks:
+      - default_bookstack
+      - bridge
+  bookstack_db:
+    image: mariadb:10
+    container_name: bookstack_db
+    environment:
+      - TZ=Europe/Berlin
+      - MYSQL_ROOT_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_DATABASE=bookstack
+      - MYSQL_USER=bookstack
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - /storage/bookstack/mariadb_data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - default_bookstack
