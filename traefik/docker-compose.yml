@@ -19,3 +19,5 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=bridge"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      - "traefik.http.routers.traefik.rule=Host(`traefik.dockerbox.local`)"
