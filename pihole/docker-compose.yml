@@ -1,0 +1,55 @@
+version: "3"
+networks:
+  bridge:
+    external: true
+  pihole_default:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.253.0/24
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    #command: --cap-add=NET_ADMIN
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "67:67/udp"
+      #- "49134:80/tcp"
+      #- "443:443/tcp"
+    networks:
+      pihole_default:
+        ipv4_address: 192.168.253.2
+      bridge:
+    environment:
+      TZ: 'Europe/Berlin'
+      WEBPASSWORD: ${WEBPASSWORD}
+      ServerIP: '192.168.1.200'
+      VIRTUAL_HOST: 'pihole.dockerbox.local'
+      DNS1: 192.168.253.3
+      DNS2: "no"
+    volumes:
+      - '/storage/pihole/pihole/:/etc/pihole/'
+      - '/storage/pihole/dnsmasq.d/:/etc/dnsmasq.d/'
+    # Recommended but not required (DHCP needs NET_ADMIN)
+    #   https://github.com/pi-hole/docker-pi-hole#note-on-capabilities
+    dns:
+      - 127.0.0.1
+    cap_add:
+      - NET_ADMIN
+    labels:
+      - "traefik.http.routers.pihole.rule=Host(`pihole.dockerbox.local`)"
+      - "traefik.docker.network=bridge"
+      - "traefik.http.services.pihole.loadbalancer.server.port=80"
+  dnstls:
+    image: qmcgaw/dns
+    container_name: dnstls
+    networks:
+      pihole_default:
+        ipv4_address: 192.168.253.3
+      bridge:
+    environment:
+      - PROVIDERS=quad9
+      - UPDATE_PERIOD=24h
+    restart: always
