@@ -1,48 +1,54 @@
 version: '3'
+networks:
+  bridge:
+    external: true
+  default_nextcloud:
+    internal: true
+ 
 services:
-  traefik:
-    image: traefik:2.4
-    command: --api.insecure=true --providers.docker 
-    depends_on:
-      - nextcloud
-    ports:
-      - "80:80"
-      - "8080:8080"
-    restart: always
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
   mariadb:
     image: mariadb:10
     ports:
       - 3306:3306
     restart: always
+    networks:
+      - default_nextcloud
     volumes:
       - /storage/nextcloud_compose/mariadb:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-  redis:
-    image: redis:6
-    restart: always
-    volumes:
-      - /storage/nextcloud_compose/redis:/data
+#  redis:
+#    image: redis:6
+#    restart: always
+#    volumes:
+#      - /storage/nextcloud_compose/redis:/data
   elasticsearch:
     image: schumischumi/elasticsearch-ingest-attachment:6.8.1-1
     environment:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - discovery.type=single-node
+    networks:
+      - default_nextcloud
     ports:
-      - "9200:9200"
+      - 9200:9200
     volumes:
       - /storage/nextcloud_compose/elasticsearch/data:/usr/share/elasticsearch/data
   nextcloud:
     depends_on:
       - mariadb
-      - redis
-      - traefik
+ #     - redis
       - elasticsearch
     image: nextcloud:21
+    hostname: "nextcloud.dockerbox.local"
+    environment:
+ #     - REDIS_HOST=redis
+      - NEXTCLOUD_TRUSTED_DOMAINS="nextcloud.dockerbox.local"
+    networks:
+      - bridge
+      - default_nextcloud
     labels:
       - "traefik.http.routers.nextcloud-http.rule=Host(`nextcloud.dockerbox.local`)"
+      - "traefik.docker.network=bridge"
     restart: always
     volumes:
       - /storage/nextcloud_compose/nextcloud/html:/var/www/html
