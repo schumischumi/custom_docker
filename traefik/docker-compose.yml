@@ -1,0 +1,21 @@
+version: '3'
+networks:
+  bridge:
+    external: true
+    
+services:
+  traefik:
+    image: traefik:2.4
+    command: --api.insecure=true --providers.docker --entryPoints.web.address=:80 #--log.filePath=/traefik.log --log.level=DEBUG
+    networks:
+      - bridge
+    ports:
+      - "80:80"
+      - "8080:8080"
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /storage/nextcloud_compose/traefik/logs/traefik.log:/traefik.log
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=bridge"
